@@ -1,22 +1,19 @@
-# Discord Chatbot with n8n Automation Integration
+##
 
-## Project Overview
+### Project Overview
 TBA
 
-## Technologies
+### Technologies
 - Javascript
 
-## Installation
+### Installation
 TBA
 
-## Features
+### Features
 TBA
 
-## Contribution
+### Preview
 TBA
 
-## Preview
-TBA
-
-## License
-- See License
+### License
+- MIT (See [License](https://github.com/shdnaicode/n8n-project/blob/master/LICENSE))
