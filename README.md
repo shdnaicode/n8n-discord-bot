@@ -5,6 +5,7 @@ TBA
 
 ### Technologies
 - Javascript
+- Docker
 
 ### Installation
 TBA
