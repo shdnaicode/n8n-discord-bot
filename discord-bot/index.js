@@ -1,7 +1,7 @@
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const { Client, GatewayIntentBits } = require('discord.js');
 const axios = require('axios');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const client = new Client({
   intents: [
