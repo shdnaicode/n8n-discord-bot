@@ -1,7 +1,9 @@
-const path = require('path');
-const { Client, GatewayIntentBits } = require('discord.js');
-const axios = require('axios');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+const path = require("path");
+const { Client, GatewayIntentBits } = require("discord.js");
+const axios = require("axios");
+require("dotenv").config({
+  path: path.resolve(__dirname, "../.env"),
+});
 
 const client = new Client({
   intents: [
@@ -11,11 +13,11 @@ const client = new Client({
   ],
 });
 
-client.on('ready', () => {
+client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
 });
 
-client.on('messageCreate', async (message) => {
+client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
   try {
@@ -27,7 +29,7 @@ client.on('messageCreate', async (message) => {
     });
     console.log(`Sent message to n8n: ${message.content}`);
   } catch (error) {
-    console.error('Error sending message to n8n:', error.message);
+    console.error("Error sending message to n8n:", error.message);
   }
 });
 
