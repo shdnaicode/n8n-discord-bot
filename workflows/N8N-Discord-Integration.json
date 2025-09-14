@@ -1,0 +1,1170 @@
+{
+  "name": "N8N-Discord-Integration",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5daf7a34-4733-4545-93fe-14ee234e030a",
+              "name": "sessionId",
+              "value": "$randomUuid()",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        80,
+        112
+      ],
+      "id": "8bb49da5-d3cc-4922-9d0b-bb559785e37c",
+      "name": "UUID Generation"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "discord",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -144,
+        112
+      ],
+      "id": "f86f5c57-91ba-4abb-9985-2edd6d12870c",
+      "name": "GET Discord API Message",
+      "webhookId": "d62da8b3-6d2f-4430-a5a4-6460e9d7469b"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('GET Discord API Message').item.json.body.content }}",
+        "options": {
+          "systemMessage": "=# ROLE\nYou are an AI Calendar Assistant. Your primary responsibility is to meticulously manage the user's calendar. This includes creating new events, retrieving information about existing events, updating event details, and removing events from the user's schedule, while maintaining a log of these actions.\n\n# CALENDAR MANAGEMENT TOOLS\n[CHECK_AVAILBILITY]\n- Purpose : To check if a user is available during a specified time slot.\n- When to Use : MANDATORY first step before creating a new event or updating an existing event's time.\n- Behavior: If status is false you MUST inform the user about the conflict and the conflicting event(s). DO NOT proceed with event creation/modification unless the user explicitly confirms to override or provides an alternative time.\n\n[CREATE_EVENT_WITH_ATTENDEES]\n- Purpose : To schedule a new event that includes other participants.\n- When to Use : After [CHECK_AVAILBILITY] confirms the user is available (or the user overrides a conflict), and the event involves attendees other than the user.\n\n\n[CREATE_SINGULAR_EVENT]\n- Purpose : To schedule a new event that involves only the user.\n- When to Use : After [CHECK_AVAILBILITY] confirms the user is available (or the user overrides a conflict), and the event is for the user only (no additional attendees).\n\n[GET_EVENTS]\n- Purpose : To retrieve information about scheduled events based on user queries.\n- When to Use : \n1. When the user asks for information about their schedule (e.g., \"What's on my calendar tomorrow?\", \"Find my meeting with Jane\").\n2. As a PRELIMINARY step before [DELETE_EVENT] or [UPDATE_EVENT] to get the specific `event_id`.\n\n\n[DELETE_EVENT]\n- Purpose : To remove an event from the calendar.\n- When to Use : After [GET_EVENTS] has identified the unique `event_id` of the event to be deleted.\n\n[UPDATE_EVENT]\n- Purpose : To modify details of an existing event.\n- When to Use : After [GET_EVENTS] has identified the unique `event_id` of the event to be updated. If the time is being updated, [CHECK_AVAILBILITY] for the new time slot MUST be performed first.\n\n[LOG_EVENT_ACTION]\n- Purpose : To store a record of every significant calendar operation performed.\n- When to Use :  After any successful `create`, `update`, or `delete` operation.\n\n\n# CURRENT DATETIME CONTEXT\n- The current date and time for referencing relative user requests (e.g., \"tomorrow\", \"next week\") and for populating event creation timestamps if not fully specified by the user is: **`{{ $now }}`**.\n- Use this `CURRENT DATETIME CONTEXT` primarily when interpreting user requests for event creation or searching, and default to it if a date/time component is ambiguous for new events.\n\n!! IMPORTANT !!\n## Intent Interpretation: \nStrive to convert user requests directly into actionable tasks using the defined tools. If the user's intent is ambiguous and could lead to an incorrect action (especially for deletions or updates), ask concise, targeted clarifying questions. Avoid asking for clarification if the intent is reasonably clear.\n\n## Default Event Duration: \nIf an event's duration is not explicitly provided by the user, assume a default duration of **1 hour**.\n\n## Availability Check is Crucial:\n    - ALWAYS use [CHECK_AVAILBILITY] before creating ANY new event or updating an existing event's time.\n    - If the slot is unavailable, inform the user of the conflict. DO NOT proceed with scheduling/rescheduling in the conflicting slot unless the user explicitly confirms to override the conflict or provides an alternative time.\n\n## Event ID Management for Update/Delete:\n    - Before using [DELETE_EVENT] or [UPDATE_EVENT], ALWAYS use [GET_EVENTS] to find the event(s) matching the user's description.\n    - If [GET_EVENTS] returns multiple events, present a summarized list (e.g., title and time) to the user and ask them to specify which exact event (preferably by providing an option or asking for the ID if shown) they wish to act upon. Do not proceed until a single, unambiguous event is identified.\n    - If [GET_EVENTS] returns no matching event, inform the user.\n\n## Response to User:\n    - After successfully creating or updating an event, ALWAYS include the `htmlLink` or `htmlLink` in your response to the user, along with a confirmation.\n    - After successfully deleting an event, provide a confirmation message. No link is needed.\n    - If an action cannot be performed, clearly explain why.\n\n## Logging Actions:\nEnsure every successful Create, Update, or Delete operation is logged using the [LOG_EVENT_ACTION] tool with the specified details.\n\n## Tool Usage Sequence: \nFollow logical sequences. For example, for a new meeting: [CHECK_AVAILBILITY] -> [CREATE_EVENT_WITH_ATTENDEES] -> [LOG_EVENT_ACTION]."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        688,
+        0
+      ],
+      "id": "81512add-84e7-4b8c-8918-abf3b0161c73",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "1"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        432,
+        224
+      ],
+      "id": "2c423931-c1c3-4120-b02c-b45e8a48ed2a",
+      "name": "Main Simple Memory"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1399347505916940290",
+          "mode": "list",
+          "cachedResultName": "N8n Discord Service",
+          "cachedResultUrl": "https://discord.com/channels/1399347505916940290"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1399347506583965798",
+          "mode": "id"
+        },
+        "content": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1408,
+        112
+      ],
+      "id": "633d79d6-81fb-4c3b-a13d-e732fe70e9d5",
+      "name": "Send a message",
+      "webhookId": "2146c662-27a0-42e0-9de0-ba46b2ea70d2",
+      "credentials": {
+        "discordBotApi": {
+          "id": "kxAtiBgw8Vyk2g75",
+          "name": "Discord Bot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        304,
+        224
+      ],
+      "id": "5c108bce-25a4-4a65-8c14-477c61c10aae",
+      "name": "Main Gemini API",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "6fRbrtIImG0xgWE3",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -144,
+        1056
+      ],
+      "id": "eb49c617-e7a1-4b77-8a7e-18e484af7ddf",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "154IYEVRsIOEdCHG",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.text }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Media",
+              "description": "Email regarding social media such as X, Instagram, Facebook, or social media related email request."
+            },
+            {
+              "category": "School",
+              "description": "Email regarding education such as school, college, or  academic-related request."
+            },
+            {
+              "category": "Others",
+              "description": "Email regarding any topics that are not related to academic o social media, this can be advertisement, regular message, and others."
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "Please classify the text provided by the user into one of the following categories: {categories}, and use the provided formatting instructions below. Don't explain, and only output the json."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        80,
+        1056
+      ],
+      "id": "aecc52ee-61ba-4194-a03c-2e1496c29b5e",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        160,
+        1312
+      ],
+      "id": "b12386d9-da79-434c-a947-d4e166f85123",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "6fRbrtIImG0xgWE3",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_7807754513901344220"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        432,
+        1248
+      ],
+      "id": "f9b8b705-f52b-4046-984a-38d4fec4ae2b",
+      "name": "Others Label",
+      "webhookId": "e851e283-fbcd-43b5-b2f2-a158c443ec18",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "154IYEVRsIOEdCHG",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_4684578057669307431"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        432,
+        1056
+      ],
+      "id": "79b24774-1361-4a1d-a75f-30ff87b54984",
+      "name": "School Label",
+      "webhookId": "a5b5c726-b783-4df2-86bf-137ef89504ca",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "154IYEVRsIOEdCHG",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.id }}",
+        "labelIds": [
+          "Label_7032626160847671516"
+        ]
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        432,
+        864
+      ],
+      "id": "695a1eb6-374a-4191-adb0-c9e0ed7ed4c8",
+      "name": "Social Media Label",
+      "webhookId": "22c364e5-bebc-4d48-b0df-604c3eb73ef5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "154IYEVRsIOEdCHG",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8107bbf0-0a17-4452-9f0d-be4150ad230d",
+              "name": "Sender",
+              "value": "={{ $('Gmail Trigger').item.json.to.value[0].address }}",
+              "type": "string"
+            },
+            {
+              "id": "3d07dc14-c2a1-4eda-8211-17e0b8b5ff4f",
+              "name": "Subject",
+              "value": "={{ $('Gmail Trigger').item.json.subject }}",
+              "type": "string"
+            },
+            {
+              "id": "dafc0e3c-3097-42a8-8b54-b37392b358fd",
+              "name": "Text",
+              "value": "={{ $('Gmail Trigger').item.json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "a3454334-3925-4afa-bf03-758f99ad0d4d",
+              "name": "Date",
+              "value": "={{ $('Gmail Trigger').item.json.date }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        656,
+        1056
+      ],
+      "id": "9703ab5d-a905-42d0-879a-8ac719d36c11",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Summarize the email and make it as notification system.",
+        "options": {
+          "systemMessage": "=# ROLES\n\nYou are helpful assistant responsible for summarize Gmail.\n\n# RULES\n- Transform EMAIL_DETAIL, SENDER_NAME, DATE into simple format.\n\n# INSTRUCTION\n- You will receive a message from email details.\n- Log the all of details to Google sheet.\n- Send the email details that has been transformed to Discord Node.\n\n\n# IMPORTANT\n- Ensure that message format is transformed into simple format before send to user.\n- Ensure that email detail and text is translated into English\n\n-----------\n# SUBJECT\n{{ $json.Subject }}\n\n# SENDER\n{{ $json.Sender }}\n-----------\n# DETAIL\n{{ $json.Text }}\n-----------\n\n# DATE\n{{ $json.Date }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        1056
+      ],
+      "id": "b0f7d4ba-f3c6-4210-9267-e34c84b38d7c",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        896,
+        1280
+      ],
+      "id": "ac750564-3138-4a44-bba7-4eae993c3585",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "6fRbrtIImG0xgWE3",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1399347505916940290",
+          "mode": "list",
+          "cachedResultName": "N8n Discord Service",
+          "cachedResultUrl": "https://discord.com/channels/1399347505916940290"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1399347506583965798",
+          "mode": "id"
+        },
+        "content": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        1232,
+        1056
+      ],
+      "id": "86693f6d-27af-457d-b32a-fdfde334e3ab",
+      "name": "Send a message2",
+      "webhookId": "2146c662-27a0-42e0-9de0-ba46b2ea70d2",
+      "credentials": {
+        "discordBotApi": {
+          "id": "kxAtiBgw8Vyk2g75",
+          "name": "Discord Bot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "calendar",
+        "calendar": {
+          "__rl": true,
+          "value": "smartsoodprasert69@gmail.com",
+          "mode": "list",
+          "cachedResultName": "smartsoodprasert69@gmail.com"
+        },
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start_Time', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End_Time', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        560,
+        224
+      ],
+      "id": "5a07467b-659b-4dd5-8c15-0ff96c862959",
+      "name": "Availability Events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "PvRFbVYTbx3UHceb",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "smartsoodprasert69@gmail.com",
+          "mode": "list",
+          "cachedResultName": "smartsoodprasert69@gmail.com"
+        },
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('After', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Before', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        688,
+        224
+      ],
+      "id": "2d5d138a-4dd7-4e01-a934-ad9ed8397a35",
+      "name": "GetMany Events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "PvRFbVYTbx3UHceb",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "smartsoodprasert69@gmail.com",
+          "mode": "list",
+          "cachedResultName": "smartsoodprasert69@gmail.com"
+        },
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+        "additionalFields": {
+          "description": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Description', ``, 'string') }}",
+          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        816,
+        224
+      ],
+      "id": "2adb52b4-f577-4de2-a295-7efcad175bc7",
+      "name": "Create Events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "PvRFbVYTbx3UHceb",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "calendar": {
+          "__rl": true,
+          "value": "smartsoodprasert69@gmail.com",
+          "mode": "list",
+          "cachedResultName": "smartsoodprasert69@gmail.com"
+        },
+        "eventId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Event_ID', ``, 'string') }}",
+        "updateFields": {
+          "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+          "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        944,
+        224
+      ],
+      "id": "311f6569-c827-46b8-a08b-3e1eb3b441f3",
+      "name": "Update Events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "PvRFbVYTbx3UHceb",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "smartsoodprasert69@gmail.com",
+          "mode": "list",
+          "cachedResultName": "smartsoodprasert69@gmail.com"
+        },
+        "eventId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Event_ID', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        1072,
+        224
+      ],
+      "id": "13e5756c-f3ca-425b-a3bc-d3e2d8f6d0d7",
+      "name": "Delete Events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "PvRFbVYTbx3UHceb",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1fwD9f6xl3VUDWgJ_73KYmEF0V2FMiWGPVNHGKGNLD00/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1fwD9f6xl3VUDWgJ_73KYmEF0V2FMiWGPVNHGKGNLD00/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "title": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('title', ``, 'string') }}",
+            "name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('name', ``, 'string') }}",
+            "email": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('email', ``, 'string') }}",
+            "event_detail": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('event_detail', ``, 'string') }}",
+            "status": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('status', ``, 'string') }}",
+            "date_time": "={{ $now }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "event_detail",
+              "displayName": "event_detail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "date_time",
+              "displayName": "date_time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        1200,
+        224
+      ],
+      "id": "93f52137-b3bf-4315-a939-23b0c5baf9f5",
+      "name": "Calendar Database",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "02X4a8HZ17ZgRtAb",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1gTiIJqQyNu_hBnvBZdhibHh68JkSvi44hGDRVxl3dj4/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1gTiIJqQyNu_hBnvBZdhibHh68JkSvi44hGDRVxl3dj4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "title": "={{ $json.Subject }}",
+            "detail": "={{ $json.Text }}",
+            "email": "={{ $json.Sender }}",
+            "date": "={{ $json.Date }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "detail",
+              "displayName": "detail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        1024,
+        1280
+      ],
+      "id": "36f0c240-4526-4655-a1cf-071e19663736",
+      "name": "Gmail Database",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "02X4a8HZ17ZgRtAb",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Hi",
+        "options": {
+          "systemMessage": "=# ROLE\nYou are an AI Calendar Assistant. Your primary responsibility is to meticulously manage the user's calendar. This includes creating new events, retrieving information about existing events, updating event details, and removing events from the user's schedule, while maintaining a log of these actions.\n\n# CALENDAR MANAGEMENT TOOLS\n[CHECK_AVAILBILITY]\n- Purpose : To check if a user is available during a specified time slot.\n- When to Use : MANDATORY first step before creating a new event or updating an existing event's time.\n- Behavior: If status is false you MUST inform the user about the conflict and the conflicting event(s). DO NOT proceed with event creation/modification unless the user explicitly confirms to override or provides an alternative time.\n\n[CREATE_EVENT_WITH_ATTENDEES]\n- Purpose : To schedule a new event that includes other participants.\n- When to Use : After [CHECK_AVAILBILITY] confirms the user is available (or the user overrides a conflict), and the event involves attendees other than the user.\n\n\n[CREATE_SINGULAR_EVENT]\n- Purpose : To schedule a new event that involves only the user.\n- When to Use : After [CHECK_AVAILBILITY] confirms the user is available (or the user overrides a conflict), and the event is for the user only (no additional attendees).\n\n[GET_EVENTS]\n- Purpose : To retrieve information about scheduled events based on user queries.\n- When to Use : \n1. When the user asks for information about their schedule (e.g., \"What's on my calendar tomorrow?\", \"Find my meeting with Jane\").\n2. As a PRELIMINARY step before [DELETE_EVENT] or [UPDATE_EVENT] to get the specific `event_id`.\n\n\n[DELETE_EVENT]\n- Purpose : To remove an event from the calendar.\n- When to Use : After [GET_EVENTS] has identified the unique `event_id` of the event to be deleted.\n\n[UPDATE_EVENT]\n- Purpose : To modify details of an existing event.\n- When to Use : After [GET_EVENTS] has identified the unique `event_id` of the event to be updated. If the time is being updated, [CHECK_AVAILBILITY] for the new time slot MUST be performed first.\n\n[LOG_EVENT_ACTION]\n- Purpose : To store a record of every significant calendar operation performed.\n- When to Use :  After any successful `create`, `update`, or `delete` operation.\n\n\n# CURRENT DATETIME CONTEXT\n- The current date and time for referencing relative user requests (e.g., \"tomorrow\", \"next week\") and for populating event creation timestamps if not fully specified by the user is: **`{{ $now }}`**.\n- Use this `CURRENT DATETIME CONTEXT` primarily when interpreting user requests for event creation or searching, and default to it if a date/time component is ambiguous for new events.\n\n!! IMPORTANT !!\n## Intent Interpretation: \nStrive to convert user requests directly into actionable tasks using the defined tools. If the user's intent is ambiguous and could lead to an incorrect action (especially for deletions or updates), ask concise, targeted clarifying questions. Avoid asking for clarification if the intent is reasonably clear.\n\n## Default Event Duration: \nIf an event's duration is not explicitly provided by the user, assume a default duration of **1 hour**.\n\n## Availability Check is Crucial:\n    - ALWAYS use [CHECK_AVAILBILITY] before creating ANY new event or updating an existing event's time.\n    - If the slot is unavailable, inform the user of the conflict. DO NOT proceed with scheduling/rescheduling in the conflicting slot unless the user explicitly confirms to override the conflict or provides an alternative time.\n\n## Event ID Management for Update/Delete:\n    - Before using [DELETE_EVENT] or [UPDATE_EVENT], ALWAYS use [GET_EVENTS] to find the event(s) matching the user's description.\n    - If [GET_EVENTS] returns multiple events, present a summarized list (e.g., title and time) to the user and ask them to specify which exact event (preferably by providing an option or asking for the ID if shown) they wish to act upon. Do not proceed until a single, unambiguous event is identified.\n    - If [GET_EVENTS] returns no matching event, inform the user.\n\n## Response to User:\n    - After successfully creating or updating an event, ALWAYS include the `htmlLink` or `htmlLink` in your response to the user, along with a confirmation.\n    - After successfully deleting an event, provide a confirmation message. No link is needed.\n    - If an action cannot be performed, clearly explain why.\n\n## Logging Actions:\nEnsure every successful Create, Update, or Delete operation is logged using the [LOG_EVENT_ACTION] tool with the specified details.\n\n## Tool Usage Sequence: \nFollow logical sequences. For example, for a new meeting: [CHECK_AVAILBILITY] -> [CREATE_EVENT_WITH_ATTENDEES] -> [LOG_EVENT_ACTION]."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        144,
+        432
+      ],
+      "id": "4bcffa97-7117-4087-8b62-eb68aaa87ebc",
+      "name": "AI Agent2"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "guildId": {
+          "__rl": true,
+          "value": "1399347505916940290",
+          "mode": "list",
+          "cachedResultName": "N8n Discord Service",
+          "cachedResultUrl": "https://discord.com/channels/1399347505916940290"
+        },
+        "channelId": {
+          "__rl": true,
+          "value": "1399347506583965798",
+          "mode": "id"
+        },
+        "content": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        544,
+        544
+      ],
+      "id": "faad55e5-f78e-415a-ba29-8c26329a7f84",
+      "name": "Send a message1",
+      "webhookId": "2146c662-27a0-42e0-9de0-ba46b2ea70d2",
+      "credentials": {
+        "discordBotApi": {
+          "id": "kxAtiBgw8Vyk2g75",
+          "name": "Discord Bot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        80,
+        656
+      ],
+      "id": "cb8651f9-86f6-4f6f-8bc2-25f4df619827",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "6fRbrtIImG0xgWE3",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "discord",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -144,
+        544
+      ],
+      "id": "91384b88-4808-4a9c-82ca-ac7b0d99c709",
+      "name": "GET Discord API Message1",
+      "webhookId": "d62da8b3-6d2f-4430-a5a4-6460e9d7469b"
+    },
+    {
+      "parameters": {
+        "resource": "calendar",
+        "calendar": {
+          "__rl": true,
+          "value": "smartsoodprasert69@gmail.com",
+          "mode": "list",
+          "cachedResultName": "smartsoodprasert69@gmail.com"
+        },
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start_Time', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End_Time', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        208,
+        656
+      ],
+      "id": "fc12ea81-28f2-4303-b86e-5b742d524a24",
+      "name": "Availability Events 2",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "PvRFbVYTbx3UHceb",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "smartsoodprasert69@gmail.com",
+          "mode": "list",
+          "cachedResultName": "smartsoodprasert69@gmail.com"
+        },
+        "timeMin": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('After', ``, 'string') }}",
+        "timeMax": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Before', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        336,
+        656
+      ],
+      "id": "48653f6f-4442-4df2-b251-35829b4d04cb",
+      "name": "GetMany Events 2",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "PvRFbVYTbx3UHceb",
+          "name": "Google Calendar account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "UUID Generation": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Discord API Message": {
+      "main": [
+        [
+          {
+            "node": "UUID Generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Main Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Main Gemini API": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "Social Media Label",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "School Label",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Others Label",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Social Media Label": {
+      "main": [
+        []
+      ]
+    },
+    "School Label": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Availability Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GetMany Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Database": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Database": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Discord API Message1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Availability Events 2": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GetMany Events 2": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Singapore",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "XBGACqMsHwECNM77",
+    "timeSavedPerExecution": 60
+  },
+  "versionId": "106f5744-7746-41b7-b0eb-0e8106491e57",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d3b56aa675a4248e6db9bc2b507c8398c22e6ec931cb7d717d313653902f94b6"
+  },
+  "id": "XBGACqMsHwECNM77",
+  "tags": []
+}
